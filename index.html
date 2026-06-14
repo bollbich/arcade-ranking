@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARCADE LEADERBOARD</title>
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #212529;
+            color: white;
+            font-family: 'Press Start 2P', monospace;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container { max-width: 650px; width: 100%; margin-top: 40px; }
+        .title { color: #f7d51d; text-align: center; margin-bottom: 30px; }
+        table { width: 100%; background: #000; }
+        th { color: #209cee; }
+        .loading { text-align: center; color: #aaa; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container nes-container is-dark with-title">
+    <p class="title">TOP PLAYERS</p>
+    
+    <div class="nes-table-responsive">
+        <table class="nes-table is-bordered is-dark">
+            <thead>
+                <tr>
+                    <th>POS</th>
+                    <th>NAME</th>
+                    <th>SCORE</th>
+                    <th>DATE</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+                <tr><td colspan="4" class="loading">LOADING DATA...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function loadRanking() {
+        try {
+            // Llama a nuestra función serverless oculta en Vercel
+            const res = await fetch('/api/ranking'); 
+            const data = await res.json();
+            const tbody = document.getElementById('leaderboard-body');
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">NO SCORES YET</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map((player, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${player.nombre ? player.nombre.toUpperCase() : '???'}</td>
+                    <td style="color: #92cc41">${player.puntuacion}</td>
+                    <td style="color: #209cee">${player.fecha || '-'}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="4" style="color:#e76e55; text-align:center;">ERROR LOADING DATA</td></tr>';
+        }
+    }
+
+    loadRanking();
+</script>
+</body>
+</html>
