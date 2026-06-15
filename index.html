@@ -66,12 +66,18 @@
     .nes-table-responsive {
         width: 100%;
         overflow-x: auto;
+        overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
     }
 
     .nes-table {
         width: 100%;
-        font-size: 12px; /* Tamaño ideal para PC */
+        font-size: 12px; /* Tamaño nítido para PC */
+        margin-bottom: 0; /* Evita espacios raros abajo */
+    }
+
+    .nes-table td, .nes-table th {
+        white-space: nowrap;
     }
 
     /* Ventana flotante de Login adaptable */
