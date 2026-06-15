@@ -188,9 +188,12 @@
     }
   });
 
-  // COMBINACIÓN SECRETA: Ctrl + Alt + P
+  // COMBINACIÓN SECRETA: Alt + P (En Apple es Option + P)
   document.addEventListener('keydown', async (e) => {
-    if (e.shiftKey && e.altKey && e.key.toLowerCase() === 'p') {
+    // Verificamos que se pulse ALT y la tecla P (sin importar Ctrl o Shift)
+    if (e.altKey && e.key.toLowerCase() === 'p') {
+      e.preventDefault(); // Evita que el navegador use atajos propios con Alt
+      
       const panel = document.getElementById('admin-panel');
       
       if (panel.style.display === 'block') {
@@ -198,14 +201,13 @@
         return;
       }
 
-      // Miramos si ya hay sesión iniciada de antes
+      // Comprobar si ya hay token guardado en el navegador
       const { data: { session } } = await supabaseClient.auth.getSession();
 
       if (session) {
         panel.style.display = 'block';
         document.getElementById('form-fecha').valueAsDate = new Date();
       } else {
-        // Si no está logueado, salta el prompt
         const email = prompt("Introduce el Email de Administrador:");
         if (!email) return;
         const password = prompt("Introduce la Contraseña:");
