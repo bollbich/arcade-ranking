@@ -34,9 +34,9 @@
             <thead>
                 <tr>
                     <th>POS</th>
-                    <th>NAME</th>
-                    <th>SCORE</th>
-                    <th>DATE</th>
+                    <th>NOMBRE</th>
+                    <th>PUNTOS</th>
+                    <th>FECHA</th>
                 </tr>
             </thead>
             <tbody id="leaderboard-body">
@@ -55,7 +55,7 @@
             const tbody = document.getElementById('leaderboard-body');
             
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">NO SCORES YET</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">¡¡NADA QUE VER AUN!!</td></tr>';
                 return;
             }
 
