@@ -15,13 +15,14 @@
         background-attachment: fixed;
         color: white;
         font-family: 'Press Start 2P', monospace;
-        padding: 20px;
+        padding: 10px; /* Reducido para arañar espacio en móvil */
         padding-bottom: 60px;
         display: flex;
         flex-direction: column;
         align-items: center;
         min-height: 100vh;
         position: relative;
+        box-sizing: border-box;
     }
 
     body::before {
@@ -34,16 +35,19 @@
         pointer-events: none;
     }
 
+    /* Contenedores principales adaptables */
     .container, .admin-container { 
-        width: max-content;
-        margin-top: 5vh;
+        width: 100%;
+        max-width: 650px; /* Evita que se estire infinito en PC */
+        margin-top: 3vh;
         background-color: rgba(0, 0, 0, 0.9);
         border: 4px solid #209cee;
         border-radius: 10px;
-        padding: 20px;
+        padding: 15px;
         box-shadow: 0 0 20px #209cee;
         position: relative;
         z-index: 20;
+        box-sizing: border-box;
     }
 
     .container .title {
@@ -55,11 +59,22 @@
     .admin-container {
         border-color: #92cc41;
         box-shadow: 0 0 20px #92cc41;
-        margin-top: 30px;
-        width: 100%;
-        max-width: 580px;
+        margin-top: 20px;
     }
 
+    /* Asegurar que la tabla no rompa el contenedor */
+    .nes-table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nes-table {
+        width: 100%;
+        font-size: 12px; /* Tamaño ideal para PC */
+    }
+
+    /* Ventana flotante de Login adaptable */
     .login-modal {
         display: none;
         position: fixed;
@@ -69,9 +84,48 @@
         background-color: #111;
         border: 4px solid #ba75ff;
         box-shadow: 0 0 30px #ba75ff;
-        padding: 30px;
+        padding: 20px;
         width: 90%;
-        max-width: 450px;
+        max-width: 400px;
+        box-sizing: border-box;
+    }
+
+    /* --- RESPONSIVE: AJUSTES CRÍTICOS PARA MÓVILES --- */
+    @media (max-width: 480px) {
+        body {
+            padding: 5px;
+            padding-bottom: 40px;
+        }
+
+        .container, .admin-container {
+            padding: 10px;
+            padding-top: 20px; /* Espacio para el título flotante de nes.css */
+            margin-top: 25px;
+        }
+
+        /* Bajamos la fuente a 8px (el mínimo legible en "Press Start 2P") */
+        .nes-table {
+            font-size: 8px;
+        }
+
+        /* Reducimos el padding interno de las celdas para que quepa todo en una línea */
+        .nes-table td, .nes-table th {
+            padding: 6px 4px !important;
+        }
+
+        /* Ajustes de botones y etiquetas en el móvil */
+        .nes-btn {
+            font-size: 10px;
+            padding: 6px 8px;
+        }
+
+        label {
+            font-size: 10px;
+        }
+        
+        .nes-input {
+            font-size: 10px;
+        }
     }
 </style>
 </head>
@@ -246,6 +300,7 @@
     }
   });
 
+  // FUNCIÓN AUXILIAR PARA ABRIR EL PANEL
   async function abrirPanelAdmin() {
     const panel = document.getElementById('admin-panel');
     const loginModal = document.getElementById('login-modal');
@@ -280,11 +335,11 @@
   document.getElementById('secret-trigger').addEventListener('click', () => {
     clicks++;
     if (clicks === 1) {
-      timeout = setTimeout(() => { clicks = 0; }, 2000); // Tienen 2 segundos para hacer los 3 clics
+      timeout = setTimeout(() => { clicks = 0; }, 2000);
     } else if (clicks === 3) {
       clearTimeout(timeout);
       clicks = 0;
-      abrirPanelAdmin(); // Abre el login o el formulario directo
+      abrirPanelAdmin();
     }
   });
 
