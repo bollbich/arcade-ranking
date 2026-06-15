@@ -20,7 +20,6 @@
         flex-direction: column;
         align-items: center;
         min-height: 100vh;
-        /* Efecto scanline opcional sobre todo */
         position: relative;
     }
 
@@ -34,10 +33,9 @@
         pointer-events: none;
     }
 
-    /* La tabla en su propio contenedor flotante */
-    .container { 
+    .container, .admin-container { 
         width: max-content;
-        margin-top: 10vh;
+        margin-top: 5vh;
         background-color: rgba(0, 0, 0, 0.8);
         border: 4px solid #209cee;
         border-radius: 10px;
@@ -45,6 +43,14 @@
         box-shadow: 0 0 20px #209cee;
         position: relative;
         z-index: 20;
+    }
+
+    .admin-container {
+        border-color: #92cc41;
+        box-shadow: 0 0 20px #92cc41;
+        margin-top: 30px;
+        width: 100%;
+        max-width: 580px;
     }
 </style>
 </head>
@@ -70,8 +76,28 @@
     </div>
 </div>
 
-<!-- Importamos la librería oficial de Supabase para el navegador -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div class="admin-container nes-container is-dark with-title">
+    <p class="title" style="color: #92cc41;">REGISTRAR PUNTOS</p>
+    <form id="ranking-form">
+        <div class="nes-field" style="margin-bottom: 15px;">
+            <label for="form-nombre">JUGADOR (3 LETRAS):</label>
+            <input type="text" id="form-nombre" class="nes-input is-dark" maxlength="3" required style="text-transform: uppercase;">
+        </div>
+        <div class="nes-field" style="margin-bottom: 15px;">
+            <label for="form-puntos">PUNTOS:</label>
+            <input type="number" id="form-puntos" class="nes-input is-dark" required>
+        </div>
+        <div class="nes-field" style="margin-bottom: 15px;">
+            <label for="form-fecha">FECHA:</label>
+            <input type="date" id="form-fecha" class="nes-input is-dark" required>
+        </div>
+        <div class="nes-field" style="margin-bottom: 20px;">
+            <label for="form-password" style="color: #ff0055;">CÓDIGO DE CONTROL:</label>
+            <input type="password" id="form-password" class="nes-input is-dark" placeholder="Clave del bar" required>
+        </div>
+        <button type="submit" class="nes-btn is-success" style="width: 100%;">GUARDAR RÉCORD</button>
+    </form>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -81,6 +107,7 @@
 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // 1. CARGAR DATOS DE LA TABLA
   async function loadLeaderboard() {
     const tbody = document.getElementById('leaderboard-body');
     if (!tbody) return;
@@ -117,7 +144,60 @@
     }
   }
 
-  // Ejecutar al cargar la página
+  // 2. ENVIAR NUEVOS DATOS (CONTROL DE DUPLICADOS)
+  document.getElementById('ranking-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const nombre = document.getElementById('form-nombre').value.toUpperCase().trim();
+    const puntuacion = parseInt(document.getElementById('form-puntos').value, 10);
+    const fecha = document.getElementById('form-fecha').value;
+    const password = document.getElementById('form-password').value;
+
+    try {
+      const authenticatedClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { 'x-admin-password': password } }
+      });
+
+      // Buscamos si ya existe el nombre
+      const { data: existente, error: errorBusqueda } = await authenticatedClient
+        .from('ranking')
+        .select('id, puntuacion')
+        .eq('nombre', nombre)
+        .maybeSingle();
+
+      if (errorBusqueda) throw new Error("Error al consultar la base de datos.");
+
+      if (existente) {
+        // Actualizar solo si supera su vieja puntuación
+        if (puntuacion > existente.puntuacion) {
+          const { error: errorUpdate } = await authenticatedClient
+            .from('ranking')
+            .update({ puntuacion: puntuacion, fecha: fecha })
+            .eq('id', existente.id);
+
+          if (errorUpdate) throw new Error("Código incorrecto o fallo al actualizar.");
+          alert('¡Récord personal superado y actualizado!');
+        } else {
+          alert(`El jugador ${nombre} ya tiene un récord mejor (${existente.puntuacion} pts). No se modifica.`);
+        }
+      } else {
+        // Insertar de cero si es nuevo
+        const { error: errorInsert } = await authenticatedClient
+          .from('ranking')
+          .insert([{ nombre, puntuacion, fecha }]);
+
+        if (errorInsert) throw new Error("Código incorrecto o fallo al guardar.");
+        alert('¡Nuevo jugador registrado con éxito!');
+      }
+
+      document.getElementById('ranking-form').reset();
+      loadLeaderboard();
+
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
   document.addEventListener('DOMContentLoaded', loadLeaderboard);
 </script>
 </body>
