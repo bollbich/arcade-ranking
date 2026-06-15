@@ -16,6 +16,7 @@
         color: white;
         font-family: 'Press Start 2P', monospace;
         padding: 20px;
+        padding-bottom: 60px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -76,24 +77,20 @@
     </div>
 </div>
 
-<div class="admin-container nes-container is-dark with-title">
+<div id="admin-panel" class="admin-container nes-container is-dark with-title" style="display: none;">
     <p class="title" style="color: #92cc41;">REGISTRAR PUNTOS</p>
     <form id="ranking-form">
         <div class="nes-field" style="margin-bottom: 15px;">
-            <label for="form-nombre">JUGADOR (3 LETRAS):</label>
-            <input type="text" id="form-nombre" class="nes-input is-dark" maxlength="3" required style="text-transform: uppercase;">
+            <label for="form-nombre">JUGADOR:</label>
+            <input type="text" id="form-nombre" class="nes-input is-dark" maxlength="10" required style="text-transform: uppercase;">
         </div>
         <div class="nes-field" style="margin-bottom: 15px;">
-            <label for="form-puntos">PUNTOS:</label>
-            <input type="number" id="form-puntos" class="nes-input is-dark" required>
-        </div>
-        <div class="nes-field" style="margin-bottom: 15px;">
-            <label for="form-fecha">FECHA:</label>
-            <input type="date" id="form-fecha" class="nes-input is-dark" required>
+            <label for="form-puntos">PUNTOS / TIEMPO:</label>
+            <input type="text" id="form-puntos" class="nes-input is-dark" required placeholder="Ej: 95500 o 1:23.45">
         </div>
         <div class="nes-field" style="margin-bottom: 20px;">
-            <label for="form-password" style="color: #ff0055;">CÓDIGO DE CONTROL:</label>
-            <input type="password" id="form-password" class="nes-input is-dark" placeholder="Clave del bar" required>
+            <label for="form-fecha">FECHA:</label>
+            <input type="date" id="form-fecha" class="nes-input is-dark" required>
         </div>
         <button type="submit" class="nes-btn is-success" style="width: 100%;">GUARDAR RÉCORD</button>
     </form>
@@ -107,7 +104,7 @@
 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // 1. CARGAR DATOS DE LA TABLA
+  // 1. CARGAR DATOS EN PANTALLA
   async function loadLeaderboard() {
     const tbody = document.getElementById('leaderboard-body');
     if (!tbody) return;
@@ -144,22 +141,16 @@
     }
   }
 
-  // 2. ENVIAR NUEVOS DATOS (CONTROL DE DUPLICADOS)
+  // 2. ENVIAR NUEVOS DATOS CON CONTROL DE DUPLICADOS
   document.getElementById('ranking-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const nombre = document.getElementById('form-nombre').value.toUpperCase().trim();
-    const puntuacion = parseInt(document.getElementById('form-puntos').value, 10);
+    const puncts = document.getElementById('form-puntos').value.trim();
     const fecha = document.getElementById('form-fecha').value;
-    const password = document.getElementById('form-password').value;
 
     try {
-      const authenticatedClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        global: { headers: { 'x-admin-password': password } }
-      });
-
-      // Buscamos si ya existe el nombre
-      const { data: existente, error: errorBusqueda } = await authenticatedClient
+      const { data: existente, error: errorBusqueda } = await supabaseClient
         .from('ranking')
         .select('id, puntuacion')
         .eq('nombre', nombre)
@@ -168,33 +159,67 @@
       if (errorBusqueda) throw new Error("Error al consultar la base de datos.");
 
       if (existente) {
-        // Actualizar solo si supera su vieja puntuación
-        if (puntuacion > existente.puntuacion) {
-          const { error: errorUpdate } = await authenticatedClient
+        if (puncts !== existente.puntuacion) {
+          const { error: errorUpdate } = await supabaseClient
             .from('ranking')
-            .update({ puntuacion: puntuacion, fecha: fecha })
+            .update({ puntuacion: puncts, fecha: fecha })
             .eq('id', existente.id);
 
-          if (errorUpdate) throw new Error("Código incorrecto o fallo al actualizar.");
-          alert('¡Récord personal superado y actualizado!');
+          if (errorUpdate) throw new Error("Sesión caducada o sin permisos.");
+          alert('¡Registro del jugador actualizado!');
         } else {
-          alert(`El jugador ${nombre} ya tiene un récord mejor (${existente.puntuacion} pts). No se modifica.`);
+          alert(`El jugador ${nombre} ya tiene este registro guardado.`);
         }
       } else {
-        // Insertar de cero si es nuevo
-        const { error: errorInsert } = await authenticatedClient
+        const { error: errorInsert } = await supabaseClient
           .from('ranking')
-          .insert([{ nombre, puntuacion, fecha }]);
+          .insert([{ nombre, puntuacion: puncts, fecha }]);
 
-        if (errorInsert) throw new Error("Código incorrecto o fallo al guardar.");
+        if (errorInsert) throw new Error("Sesión caducada o sin permisos.");
         alert('¡Nuevo jugador registrado con éxito!');
       }
 
       document.getElementById('ranking-form').reset();
+      document.getElementById('admin-panel').style.display = 'none';
       loadLeaderboard();
 
     } catch (err) {
       alert(err.message);
+    }
+  });
+
+  // COMBINACIÓN SECRETA: Ctrl + Alt + K
+  document.addEventListener('keydown', async (e) => {
+    if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'k') {
+      const panel = document.getElementById('admin-panel');
+      
+      if (panel.style.display === 'block') {
+        panel.style.display = 'none';
+        return;
+      }
+
+      // Miramos si ya hay sesión iniciada de antes
+      const { data: { session } } = await supabaseClient.auth.getSession();
+
+      if (session) {
+        panel.style.display = 'block';
+        document.getElementById('form-fecha').valueAsDate = new Date();
+      } else {
+        // Si no está logueado, salta el prompt
+        const email = prompt("Introduce el Email de Administrador:");
+        if (!email) return;
+        const password = prompt("Introduce la Contraseña:");
+        if (!password) return;
+
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+        if (error) {
+          alert("Acceso denegado.");
+        } else {
+          panel.style.display = 'block';
+          document.getElementById('form-fecha').valueAsDate = new Date();
+        }
+      }
     }
   });
 
