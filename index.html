@@ -37,7 +37,7 @@
     .container, .admin-container { 
         width: max-content;
         margin-top: 5vh;
-        background-color: rgba(0, 0, 0, 0.8);
+        background-color: rgba(0, 0, 0, 0.9);
         border: 4px solid #209cee;
         border-radius: 10px;
         padding: 20px;
@@ -52,6 +52,21 @@
         margin-top: 30px;
         width: 100%;
         max-width: 580px;
+    }
+
+    /* Ventana flotante para el login oculto de administrador */
+    .login-modal {
+        display: none;
+        position: fixed;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 100;
+        background-color: #111;
+        border: 4px solid #ba75ff;
+        box-shadow: 0 0 30px #ba75ff;
+        padding: 30px;
+        width: 90%;
+        max-width: 450px;
     }
 </style>
 </head>
@@ -77,6 +92,22 @@
     </div>
 </div>
 
+<div id="login-modal" class="login-modal nes-container is-dark with-title">
+    <p class="title" style="color: #ba75ff;">ADMIN LOGIN</p>
+    <form id="login-form">
+        <div class="nes-field" style="margin-bottom: 15px;">
+            <label for="login-email">EMAIL:</label>
+            <input type="email" id="login-email" class="nes-input is-dark" required placeholder="admin@bodega.com">
+        </div>
+        <div class="nes-field" style="margin-bottom: 20px;">
+            <label for="login-password">CONTRASEÑA:</label>
+            <input type="password" id="login-password" class="nes-input is-dark" required placeholder="******">
+        </div>
+        <button type="submit" class="nes-btn is-primary" style="width: 100%; margin-bottom: 10px;">ENTRAR</button>
+        <button type="button" class="nes-btn is-error" style="width: 100%;" onclick="cerrarLogin()">CANCELAR</button>
+    </form>
+</div>
+
 <div id="admin-panel" class="admin-container nes-container is-dark with-title" style="display: none;">
     <p class="title" style="color: #92cc41;">REGISTRAR PUNTOS</p>
     <form id="ranking-form">
@@ -85,8 +116,8 @@
             <input type="text" id="form-nombre" class="nes-input is-dark" maxlength="10" required style="text-transform: uppercase;">
         </div>
         <div class="nes-field" style="margin-bottom: 15px;">
-            <label for="form-puntos">PUNTOS / TIEMPO:</label>
-            <input type="text" id="form-puntos" class="nes-input is-dark" required placeholder="Ej: 95500 o 1:23.45">
+            <label for="form-puntos">PUNTOS:</label>
+            <input type="number" id="form-puntos" class="nes-input is-dark" required placeholder="Ej: 95500">
         </div>
         <div class="nes-field" style="margin-bottom: 20px;">
             <label for="form-fecha">FECHA:</label>
@@ -104,7 +135,12 @@
 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // 1. CARGAR DATOS EN PANTALLA
+  function cerrarLogin() {
+    document.getElementById('login-modal').style.display = 'none';
+    document.getElementById('login-form').reset();
+  }
+
+  // 1. CARGAR DATOS (ORGANIZADO AUTOMÁTICAMENTE POR PUNTOS DE MAYOR A MENOR)
   async function loadLeaderboard() {
     const tbody = document.getElementById('leaderboard-body');
     if (!tbody) return;
@@ -113,7 +149,7 @@
       const { data, error } = await supabaseClient
         .from('ranking')
         .select('nombre, puntuacion, fecha')
-        .order('puntuacion', { ascending: false })
+        .order('puntuacion', { ascending: false }) // Máxima puntuación arriba
         .limit(10);
 
       if (error) throw error;
@@ -129,7 +165,7 @@
         tr.innerHTML = `
           <td>${index + 1}</td>
           <td>${row.nombre}</td>
-          <td style="color: #00ff00;">${row.puntuacion}</td>
+          <td style="color: #00ff00;">${parseInt(row.puntuacion).toLocaleString()}</td>
           <td style="color: #00bfff;">${row.fecha}</td>
         `;
         tbody.appendChild(tr);
@@ -141,12 +177,29 @@
     }
   }
 
-  // 2. ENVIAR NUEVOS DATOS CON CONTROL DE DUPLICADOS
+  // 2. PROCESAR LOGIN DESDE EL FORMULARIO SEGURO
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      alert("Acceso denegado: " + error.message);
+    } else {
+      cerrarLogin();
+      document.getElementById('admin-panel').style.display = 'block';
+      document.getElementById('form-fecha').valueAsDate = new Date();
+    }
+  });
+
+  // 3. ENVIAR DATOS CON CONTROL DE DUPLICADOS (PUNTOS NUMÉRICOS)
   document.getElementById('ranking-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const nombre = document.getElementById('form-nombre').value.toUpperCase().trim();
-    const puncts = document.getElementById('form-puntos').value.trim();
+    const puncts = parseInt(document.getElementById('form-puntos').value);
     const fecha = document.getElementById('form-fecha').value;
 
     try {
@@ -159,7 +212,7 @@
       if (errorBusqueda) throw new Error("Error al consultar la base de datos.");
 
       if (existente) {
-        if (puncts !== existente.puntuacion) {
+        if (puncts !== parseInt(existente.puntuacion)) {
           const { error: errorUpdate } = await supabaseClient
             .from('ranking')
             .update({ puntuacion: puncts, fecha: fecha })
@@ -190,37 +243,27 @@
 
   // COMBINACIÓN SECRETA: Alt + P (En Apple es Option + P)
   document.addEventListener('keydown', async (e) => {
-    // Verificamos que se pulse ALT y la tecla P (sin importar Ctrl o Shift)
     if (e.altKey && e.key.toLowerCase() === 'p') {
-      e.preventDefault(); // Evita que el navegador use atajos propios con Alt
+      e.preventDefault();
       
       const panel = document.getElementById('admin-panel');
+      const loginModal = document.getElementById('login-modal');
       
-      if (panel.style.display === 'block') {
+      if (panel.style.display === 'block' || loginModal.style.display === 'block') {
         panel.style.display = 'none';
+        loginModal.style.display = 'none';
         return;
       }
 
-      // Comprobar si ya hay token guardado en el navegador
       const { data: { session } } = await supabaseClient.auth.getSession();
 
       if (session) {
         panel.style.display = 'block';
         document.getElementById('form-fecha').valueAsDate = new Date();
       } else {
-        const email = prompt("Introduce el Email de Administrador:");
-        if (!email) return;
-        const password = prompt("Introduce la Contraseña:");
-        if (!password) return;
-
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-        if (error) {
-          alert("Acceso denegado.");
-        } else {
-          panel.style.display = 'block';
-          document.getElementById('form-fecha').valueAsDate = new Date();
-        }
+        // En vez de prompts visibles, levanta la interfaz de login oculta
+        loginModal.style.display = 'block';
+        document.getElementById('login-email').focus();
       }
     }
   });
