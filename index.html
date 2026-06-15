@@ -46,6 +46,12 @@
         z-index: 20;
     }
 
+    .container .title {
+        cursor: default;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
     .admin-container {
         border-color: #92cc41;
         box-shadow: 0 0 20px #92cc41;
@@ -54,7 +60,6 @@
         max-width: 580px;
     }
 
-    /* Ventana flotante para el login oculto de administrador */
     .login-modal {
         display: none;
         position: fixed;
@@ -73,7 +78,7 @@
 <body>
 
 <div class="container nes-container is-dark with-title">
-    <p class="title">TOP PLAYERS</p>
+    <p class="title" id="secret-trigger">TOP PLAYERS</p>
     
     <div class="nes-table-responsive">
         <table class="nes-table is-bordered is-dark">
@@ -140,7 +145,7 @@
     document.getElementById('login-form').reset();
   }
 
-  // 1. CARGAR DATOS (ORGANIZADO AUTOMÁTICAMENTE POR PUNTOS DE MAYOR A MENOR)
+  // 1. CARGAR DATOS
   async function loadLeaderboard() {
     const tbody = document.getElementById('leaderboard-body');
     if (!tbody) return;
@@ -149,7 +154,7 @@
       const { data, error } = await supabaseClient
         .from('ranking')
         .select('nombre, puntuacion, fecha')
-        .order('puntuacion', { ascending: false }) // Máxima puntuación arriba
+        .order('puntuacion', { ascending: false })
         .limit(10);
 
       if (error) throw error;
@@ -194,7 +199,7 @@
     }
   });
 
-  // 3. ENVIAR DATOS CON CONTROL DE DUPLICADOS (PUNTOS NUMÉRICOS)
+  // 3. ENVIAR DATOS CON CONTROL DE DUPLICADOS
   document.getElementById('ranking-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -241,30 +246,45 @@
     }
   });
 
-  // COMBINACIÓN SECRETA: Alt + P (En Apple es Option + P)
+  async function abrirPanelAdmin() {
+    const panel = document.getElementById('admin-panel');
+    const loginModal = document.getElementById('login-modal');
+    
+    if (panel.style.display === 'block' || loginModal.style.display === 'block') {
+      panel.style.display = 'none';
+      loginModal.style.display = 'none';
+      return;
+    }
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (session) {
+      panel.style.display = 'block';
+      document.getElementById('form-fecha').valueAsDate = new Date();
+    } else {
+      loginModal.style.display = 'block';
+      document.getElementById('login-email').focus();
+    }
+  }
+
+  // COMBINACIÓN EN ORDENADOR: Alt + P
   document.addEventListener('keydown', async (e) => {
     if (e.altKey && e.key.toLowerCase() === 'p') {
       e.preventDefault();
-      
-      const panel = document.getElementById('admin-panel');
-      const loginModal = document.getElementById('login-modal');
-      
-      if (panel.style.display === 'block' || loginModal.style.display === 'block') {
-        panel.style.display = 'none';
-        loginModal.style.display = 'none';
-        return;
-      }
+      abrirPanelAdmin();
+    }
+  });
 
-      const { data: { session } } = await supabaseClient.auth.getSession();
-
-      if (session) {
-        panel.style.display = 'block';
-        document.getElementById('form-fecha').valueAsDate = new Date();
-      } else {
-        // En vez de prompts visibles, levanta la interfaz de login oculta
-        loginModal.style.display = 'block';
-        document.getElementById('login-email').focus();
-      }
+  let clicks = 0;
+  let timeout;
+  document.getElementById('secret-trigger').addEventListener('click', () => {
+    clicks++;
+    if (clicks === 1) {
+      timeout = setTimeout(() => { clicks = 0; }, 2000); // Tienen 2 segundos para hacer los 3 clics
+    } else if (clicks === 3) {
+      clearTimeout(timeout);
+      clicks = 0;
+      abrirPanelAdmin(); // Abre el login o el formulario directo
     }
   });
 
