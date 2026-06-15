@@ -74,19 +74,20 @@
 <!-- Importamos la librería oficial de Supabase para el navegador -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-  const SUPABASE_URL = 'https://dovdlxdcfeaitaqjwnvf.supabase.co/rest/v1/';
+  const SUPABASE_URL = 'https://dovdlxdcfeaitaqjwnvf.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_D8GrXKDEFt9ARRhq-2ae-w_HsH62NY5';
 
-  // Inicializamos el cliente de Supabase
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   async function loadLeaderboard() {
     const tbody = document.getElementById('leaderboard-body');
+    if (!tbody) return;
     
     try {
-      // Consultamos la tabla directamente
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('ranking')
         .select('nombre, puntuacion, fecha')
         .order('puntuacion', { ascending: false })
@@ -94,13 +95,11 @@
 
       if (error) throw error;
 
-      // Si no hay datos todavía
       if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">SIN PUNTUACIONES AÚN</td></tr>';
         return;
       }
 
-      // Limpiamos el "Cargando..." e insertamos las filas
       tbody.innerHTML = '';
       data.forEach((row, index) => {
         const tr = document.createElement('tr');
@@ -115,7 +114,7 @@
 
     } catch (err) {
       console.error(err);
-      tbody.innerHTML = `<tr><td colspan="4" style="color: #ff0000; text-align:center;">ERROR: ${err.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" style="color: #ff0000; text-align:center; padding: 20px;">ERROR: ${err.message}</td></tr>`;
     }
   }
 
