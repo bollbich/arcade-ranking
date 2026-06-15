@@ -188,9 +188,9 @@
     }
   });
 
-  // COMBINACIÓN SECRETA: Ctrl + Alt + K
+  // COMBINACIÓN SECRETA: Ctrl + Alt + P
   document.addEventListener('keydown', async (e) => {
-    if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'k') {
+    if (e.shiftKey && e.altKey && e.key.toLowerCase() === 'p') {
       const panel = document.getElementById('admin-panel');
       
       if (panel.style.display === 'block') {
