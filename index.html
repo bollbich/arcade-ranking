@@ -71,33 +71,56 @@
     </div>
 </div>
 
+<!-- Importamos la librería oficial de Supabase para el navegador -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-    async function loadRanking() {
-        try {
-            // Llama a nuestra función serverless oculta en Vercel
-            const res = await fetch('/api/ranking'); 
-            const data = await res.json();
-            const tbody = document.getElementById('leaderboard-body');
-            
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">¡¡NADA QUE VER AUN!!</td></tr>';
-                return;
-            }
+  const SUPABASE_URL = 'https://dovdlxdcfeaitaqjwnvf.supabase.co/rest/v1/';
+  const SUPABASE_ANON_KEY = 'sb_publishable_D8GrXKDEFt9ARRhq-2ae-w_HsH62NY5';
 
-            tbody.innerHTML = data.map((player, index) => `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${player.nombre ? player.nombre.toUpperCase() : '???'}</td>
-                    <td style="color: #92cc41">${player.puntuacion}</td>
-                    <td style="color: #209cee">${player.fecha || '-'}</td>
-                </tr>
-            `).join('');
-        } catch (err) {
-            document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="4" style="color:#e76e55; text-align:center;">ERROR LOADING DATA</td></tr>';
-        }
+  // Inicializamos el cliente de Supabase
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function loadLeaderboard() {
+    const tbody = document.getElementById('leaderboard-body');
+    
+    try {
+      // Consultamos la tabla directamente
+      const { data, error } = await supabase
+        .from('ranking')
+        .select('nombre, puntuacion, fecha')
+        .order('puntuacion', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      // Si no hay datos todavía
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">SIN PUNTUACIONES AÚN</td></tr>';
+        return;
+      }
+
+      // Limpiamos el "Cargando..." e insertamos las filas
+      tbody.innerHTML = '';
+      data.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${row.nombre}</td>
+          <td style="color: #00ff00;">${row.puntuacion}</td>
+          <td style="color: #00bfff;">${row.fecha}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+    } catch (err) {
+      console.error(err);
+      tbody.innerHTML = `<tr><td colspan="4" style="color: #ff0000; text-align:center;">ERROR: ${err.message}</td></tr>`;
     }
+  }
 
-    loadRanking();
+  // Ejecutar al cargar la página
+  document.addEventListener('DOMContentLoaded', loadLeaderboard);
 </script>
 </body>
 </html>
