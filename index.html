@@ -273,9 +273,20 @@
         const [year, month, day] = row.fecha.split('-');
         const fechaCorta = `${day}/${month}/${year.substring(2)}`; 
 
+        const pos = index + 1;
+        let posStyle = '';
+        
+        if (pos === 1) {
+          posStyle = 'style="color: #ffff00; font-weight: bold;"'; // 1º Amarillo Oro
+        } else if (pos === 2) {
+          posStyle = 'style="color: #ff00ff;"'; // 2º Fucsia Neón
+        } else if (pos === 3) {
+          posStyle = 'style="color: #00ffff;"'; // 3º Cian Neón
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${index + 1}</td>
+          <td ${posStyle}>${pos}</td>
           <td>${row.nombre}</td>
           <td style="color: #00ff00;">${parseInt(row.puntuacion).toLocaleString()}</td>
           <td style="color: #00bfff;">${fechaCorta}</td>
@@ -287,7 +298,7 @@
       console.error(err);
       tbody.innerHTML = `<tr><td colspan="4" style="color: #ff0000; text-align:center; padding: 20px;">ERROR: ${err.message}</td></tr>`;
     }
-  }
+}
 
   // 1. LOGIN
   document.getElementById('login-form').addEventListener('submit', async (e) => {
