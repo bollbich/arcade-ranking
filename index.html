@@ -35,11 +35,12 @@
         pointer-events: none;
     }
 
-    /* 1. ESTRUCTURA BASE PARA LOS CONTENEDORES */
-    .container, .admin-container { 
+    /* 1. EL CONTENEDOR GIGANTE: Ahora 100% transparente para ver el fondo arcade */
+    .container { 
         width: 100%;
         max-width: 650px;
         margin-top: 3vh;
+        background-color: transparent !important;
         border: 4px solid #209cee;
         border-radius: 10px;
         padding: 15px;
@@ -49,20 +50,22 @@
         box-sizing: border-box;
     }
 
-    /* 2. CONTENEDOR PÚBLICO: Transparente para ver el fondo del bar */
-    .container {
-        background-color: transparent !important;
-    }
-
-    /* 3. CONTENEDOR ADMIN: Mantiene fondo sólido para leer bien al escribir */
+    /* PANEL DE ADMINISTRACIÓN (Mantiene fondo sólido para leer inputs) */
     .admin-container {
-        background-color: rgba(0, 0, 0, 0.95) !important;
-        border-color: #92cc41;
-        box-shadow: 0 0 20px #92cc41;
+        width: 100%;
+        max-width: 650px;
         margin-top: 20px;
+        background-color: rgba(0, 0, 0, 0.95) !important;
+        border: 4px solid #92cc41;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 0 20px #92cc41;
+        position: relative;
+        z-index: 20;
+        box-sizing: border-box;
     }
 
-    /* Caja del logo con posición relativa para asegurar eventos táctiles */
+    /* LOGO: Capa alta y libre para asegurar el triple clic */
     .logo-container {
         display: flex;
         justify-content: center;
@@ -70,15 +73,15 @@
         margin-top: 10px;
         margin-bottom: 25px;
         position: relative;
-        z-index: 30;
+        z-index: 99 !important;
     }
 
-    /* Logo grande y reactivo a clics */
     .brand-logo {
         height: 120px;
         width: auto;
         display: block;
         cursor: pointer;
+        pointer-events: auto !important;
         user-select: none;
         -webkit-user-select: none;
         -webkit-tap-highlight-color: transparent; 
@@ -90,24 +93,28 @@
         overflow-y: hidden;
     }
 
-    /* 4. TABLA TRANSPARENTE */
+    /* 2. LA TABLA: Estructura transparente */
     .nes-table {
         width: 100%;
         font-size: 11px;
         background-color: transparent !important;
     }
 
-    /* 5. FONDO SOLO A LAS ROWS (Filas legibles sobre el fondo arcade) */
-    .nes-table thead tr {
-        background-color: rgba(0, 0, 0, 0.9) !important;
-    }
-    
-    .nes-table tbody tr {
-        background-color: rgba(0, 0, 0, 0.75) !important;
+    /* 3. LÍNEAS BLANCAS Y FILAS BLINDADAS: Aplicamos el fondo a la celda para no romper el borde */
+    .nes-table.is-bordered th, 
+    .nes-table.is-bordered td {
+        border: 4px solid #ffffff !important; /* Fuerza a que la cuadrícula sea blanca */
+        white-space: nowrap;
     }
 
-    .nes-table td, .nes-table th {
-        white-space: nowrap;
+    /* Fondo de las celdas de la cabecera */
+    .nes-table thead th {
+        background-color: rgba(0, 0, 0, 0.9) !important;
+    }
+
+    /* Fondo de las celdas de los registros de jugadores */
+    .nes-table tbody td {
+        background-color: rgba(0, 0, 0, 0.75) !important;
     }
 
     .login-modal {
@@ -157,7 +164,6 @@
 <body>
 
 <div class="container nes-container is-dark">
-    
     <div class="logo-container">
         <img src="LogoBodega.png" id="secret-trigger" class="brand-logo" alt="Logo Bodega">
     </div>
