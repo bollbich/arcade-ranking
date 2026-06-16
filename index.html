@@ -209,7 +209,7 @@
 
 <div id="admin-panel" class="admin-container nes-container is-dark with-title" style="display: none;">
     <p class="title" style="color: #92cc41;">REGISTRAR PUNTOS</p>
-    <form id="ranking-form">
+    <form id="ranking-form" style="margin-bottom: 30px;">
         <div class="nes-field" style="margin-bottom: 15px;">
             <label for="form-nombre">JUGADOR:</label>
             <input type="text" id="form-nombre" class="nes-input is-dark" maxlength="10" required style="text-transform: uppercase;">
@@ -223,6 +223,17 @@
             <input type="date" id="form-fecha" class="nes-input is-dark" required>
         </div>
         <button type="submit" class="nes-btn is-success" style="width: 100%;">GUARDAR RÉCORD</button>
+    </form>
+
+    <hr style="border-top: 4px dashed #ff3860; margin: 0 0 20px 0;">
+    <p style="color: #ff3860; font-size: 12px; margin-bottom: 15px;">ZONA DE PELIGRO: BORRAR JUGADOR</p>
+    
+    <form id="delete-form">
+        <div class="nes-field" style="margin-bottom: 15px;">
+            <label for="delete-nombre" style="color: #ff3860;">NOMBRE EXACTO:</label>
+            <input type="text" id="delete-nombre" class="nes-input is-dark" maxlength="10" required style="text-transform: uppercase;" placeholder="EJ: EL_TROL">
+        </div>
+        <button type="submit" class="nes-btn is-error" style="width: 100%;">BORRAR DEL RANKING</button>
     </form>
 </div>
 
@@ -275,6 +286,7 @@
     }
   }
 
+  // 1. LOGIN
   document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value.trim();
@@ -291,6 +303,7 @@
     }
   });
 
+  // 2. GUARDAR/ACTUALIZAR RÉCORD (EXISTENTE)
   document.getElementById('ranking-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const nombre = document.getElementById('form-nombre').value.toUpperCase().trim();
@@ -328,6 +341,45 @@
       }
 
       document.getElementById('ranking-form').reset();
+      document.getElementById('admin-panel').style.display = 'none';
+      loadLeaderboard();
+
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  // 3. NUEVA FUNCIONALIDAD: BORRAR JUGADOR POR NOMBRE
+  document.getElementById('delete-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Obtenemos el nombre del nuevo input de borrado
+    const nombre = document.getElementById('delete-nombre').value.toUpperCase().trim();
+    
+    // Confirmación de seguridad para no liar ninguna en el bar
+    const confirmar = confirm(`¿SEGURO que quieres borrar a "${nombre}"? Esta acción no se puede deshacer.`);
+    if (!confirmar) return;
+
+    try {
+      // Ejecutamos el borrado en Supabase filtrando por nombre exacto
+      const { data, error } = await supabaseClient
+        .from('ranking')
+        .delete()
+        .eq('nombre', nombre)
+        .select(); // Usamos select para verificar si realmente se borró algo
+
+      if (error) throw new Error("Sesión caducada o sin permisos de admin.");
+
+      // Si data está vacío, es que el nombre no existía
+      if (!data || data.length === 0) {
+        alert(`El jugador "${nombre}" no se encuentra en el ranking.`);
+        return;
+      }
+
+      alert(`¡"${nombre}" ha sido eliminado del ranking con éxito!`);
+      
+      // Limpiamos formularios, cerramos panel y recargamos tabla
+      document.getElementById('delete-form').reset();
       document.getElementById('admin-panel').style.display = 'none';
       loadLeaderboard();
 
