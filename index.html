@@ -35,11 +35,12 @@
         pointer-events: none;
     }
 
-    /* 1. EL CONTENEDOR GIGANTE: Ahora 100% transparente para ver el fondo arcade */
-    .container { 
+    /* 1. ELIMINACIÓN RADICAL DEL FONDO GRIS DEL CONTENEDOR GIGANTE */
+    .container.nes-container.is-dark { 
         width: 100%;
         max-width: 650px;
         margin-top: 3vh;
+        background: transparent !important;
         background-color: transparent !important;
         border: 4px solid #209cee;
         border-radius: 10px;
@@ -50,7 +51,7 @@
         box-sizing: border-box;
     }
 
-    /* PANEL DE ADMINISTRACIÓN (Mantiene fondo sólido para leer inputs) */
+    /* PANEL DE ADMINISTRACIÓN (Mantiene el fondo sólido para poder escribir bien) */
     .admin-container {
         width: 100%;
         max-width: 650px;
@@ -65,7 +66,7 @@
         box-sizing: border-box;
     }
 
-    /* LOGO: Capa alta y libre para asegurar el triple clic */
+    /* LOGO: Capa superior limpia */
     .logo-container {
         display: flex;
         justify-content: center;
@@ -93,26 +94,27 @@
         overflow-y: hidden;
     }
 
-    /* 2. LA TABLA: Estructura transparente */
+    /* 2. LA TABLA Y CUADRÍCULA CRUNCHY */
     .nes-table {
         width: 100%;
         font-size: 11px;
         background-color: transparent !important;
+        border-collapse: collapse !important; /* Evita que las líneas se separen con huecos negros */
     }
 
-    /* 3. LÍNEAS BLANCAS Y FILAS BLINDADAS: Aplicamos el fondo a la celda para no romper el borde */
+    /* Fuerza a que todas las celdas compartan un borde blanco pixelado continuo */
     .nes-table.is-bordered th, 
     .nes-table.is-bordered td {
-        border: 4px solid #ffffff !important; /* Fuerza a que la cuadrícula sea blanca */
+        border: 2px solid #ffffff !important; 
         white-space: nowrap;
     }
 
-    /* Fondo de las celdas de la cabecera */
+    /* Fondo oscuro independiente solo para el texto de la cabecera */
     .nes-table thead th {
         background-color: rgba(0, 0, 0, 0.9) !important;
     }
 
-    /* Fondo de las celdas de los registros de jugadores */
+    /* Fondo sutil para las celdas de puntuación (deja ver el fondo del bar pero mantiene legible las letras) */
     .nes-table tbody td {
         background-color: rgba(0, 0, 0, 0.75) !important;
     }
@@ -138,7 +140,7 @@
             padding-bottom: 40px;
         }
 
-        .container, .admin-container {
+        .container.nes-container.is-dark, .admin-container {
             padding: 10px;
             margin-top: 45px;
         }
