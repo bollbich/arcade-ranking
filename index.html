@@ -270,12 +270,15 @@
 
       tbody.innerHTML = '';
       data.forEach((row, index) => {
+        const [year, month, day] = row.fecha.split('-');
+        const fechaCorta = `${day}/${month}/${year.substring(2)}`; 
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${index + 1}</td>
           <td>${row.nombre}</td>
           <td style="color: #00ff00;">${parseInt(row.puntuacion).toLocaleString()}</td>
-          <td style="color: #00bfff;">${row.fecha}</td>
+          <td style="color: #00bfff;">${fechaCorta}</td>
         `;
         tbody.appendChild(tr);
       });
